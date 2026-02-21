@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="周计划" />
+  <meta name="theme-color" content="#0b0d13" />
+  <title>📋 周计划甘特图</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+    :root {
+      --bg:#0b0d13;--sf:#141720;--sf2:#1c2030;--bd:#252a3a;--bd2:#2f3548;
+      --t1:#e2e4ea;--t2:#9298a8;--t3:#5c6278;
+      --cyan:#22d3ee;--pink:#f472b6;--purple:#a78bfa;--green:#34d399;--yellow:#fbbf24;--red:#ef4444;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{width:100%;min-height:100vh;min-height:100dvh;background:var(--bg)}
+    body{color:var(--t1);font-family:'Noto Sans SC','PingFang SC',-apple-system,sans-serif;padding:24px 20px 80px;padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(80px,env(safe-area-inset-bottom))}
+    ::-webkit-scrollbar{height:3px;width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#3a3f52;border-radius:2px}
+    @keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}100%{opacity:0;transform:translateY(-60px) rotate(360deg) scale(0)}}
+    @keyframes pglow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.25)}50%{box-shadow:0 0 24px 6px rgba(251,191,36,.1)}}
+    @keyframes sin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .cft{position:fixed;width:8px;height:8px;pointer-events:none;z-index:9999;opacity:0;animation:cfall 1s ease-out forwards}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+    .ttl{font-size:22px;font-weight:700;background:linear-gradient(135deg,#e2e4ea 30%,#6e7490);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .sub{font-size:11px;color:var(--t3);margin-top:3px;font-family:monospace;letter-spacing:.8px}
+    .hbtns{display:flex;gap:8px}
+    .bsm{background:rgba(255,255,255,.04);border:1px solid var(--bd);color:var(--t3);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:5px}
+    .bsm:hover{background:rgba(255,255,255,.08);color:var(--t1);border-color:var(--bd2)}
+    .bsm.act{background:rgba(34,211,238,.1);border-color:rgba(34,211,238,.3);color:var(--cyan)}
+
+    .pbox{background:var(--sf);border-radius:12px;padding:14px 18px;margin-bottom:18px;border:1px solid var(--bd)}
+    .phdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .plbl{font-size:13px;font-weight:500}.pcnt{font-size:12px;color:var(--t3);font-family:monospace}
+    .ptrk{height:7px;background:#1e2235;border-radius:4px;overflow:hidden}
+    .pfil{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+    .lgd{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+    .lgi{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3)}
+    .lgd-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+    .tw{overflow-x:auto;border-radius:12px;border:1px solid var(--bd);background:var(--sf)}
+    table{width:100%;border-collapse:collapse;min-width:680px}
+    thead th{padding:10px 6px;font-size:11px;font-weight:500;color:var(--t3);border-bottom:1px solid var(--bd);text-align:center;font-family:monospace;min-width:64px}
+    thead th.tod{color:var(--cyan)}
+    thead th.thd{padding:10px 12px 10px 18px;text-align:left;position:sticky;left:0;background:var(--sf);z-index:2;min-width:140px;font-size:11px;font-weight:600;color:var(--t3)}
+    .ths{font-size:9px;opacity:.6;margin-top:1px}
+    .sr td{padding:7px 18px;font-size:10px;font-weight:600;color:var(--t3);letter-spacing:1.2px;background:rgba(255,255,255,.01);border-bottom:1px solid rgba(255,255,255,.025)}
+    .tr{border-bottom:1px solid rgba(255,255,255,.025)}
+    .tnc{padding:6px 10px 6px 18px;font-size:13px;position:sticky;left:0;background:var(--sf);z-index:1;white-space:nowrap}
+    .tni{display:flex;align-items:center;gap:7px}
+    .tnid{width:3px;height:16px;border-radius:2px;transition:background .3s;flex-shrink:0}
+    .tnt{transition:all .3s}.tnt.dn{text-decoration:line-through;color:var(--t3)}
+    .tnk{font-size:10px;color:var(--green);display:none}.tnk.sh{display:inline}
+    .bc{padding:5px 2px;text-align:center;vertical-align:middle}
+    .bar{height:26px;border-radius:6px;margin:0 1px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s cubic-bezier(.4,0,.2,1);border:1px solid transparent;overflow:hidden;padding:0 3px}
+    .bar:hover:not(.dn){transform:scaleY(1.18);box-shadow:0 0 14px rgba(255,255,255,.06)}
+    .bar.dn{background:#1e2235!important;transform:scaleY(.82);border:1px dashed #2f3548;opacity:.45}
+    .bchk{font-size:12px;color:var(--t3);text-decoration:line-through;font-weight:500;display:none}
+    .bar.dn .bchk{display:inline}.bar.dn .blbl{display:none}
+    .blbl{font-size:9px;font-weight:500;color:rgba(0,0,0,.55);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 4px)}
+
+    .dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:7px;margin-top:18px}
+    .dc{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:9px 7px;text-align:center;transition:all .3s}
+    .dc.ad{opacity:.55}.dcl{font-size:11px;font-weight:600;color:var(--t2)}.dcl.tod{color:var(--cyan)}
+    .dcp{font-size:17px;font-weight:700;margin:3px 0;color:var(--t1)}.dcp.ad{color:var(--green)}
+    .dcs{font-size:10px;color:var(--t3)}
+
+    .cel{margin-top:22px;text-align:center;padding:20px;background:linear-gradient(135deg,rgba(251,191,36,.06),rgba(52,211,153,.06));border-radius:14px;border:1px solid rgba(251,191,36,.15);animation:pglow 2s ease infinite;display:none}.cel.sh{display:block}
+
+    .mo{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}.mo.sh{display:flex}
+    .md{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:24px 28px;max-width:340px;width:90%;animation:sin .2s}
+    .mdt{font-size:15px;font-weight:600;margin-bottom:6px;text-align:center}
+    .mdd{font-size:12px;color:var(--t3);margin-bottom:18px;text-align:center}
+    .mdb{display:flex;gap:10px;justify-content:center}
+    .bcn{padding:8px 20px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-family:inherit}
+    .bdg{padding:8px 20px;border-radius:8px;border:none;background:var(--red);color:#fff;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit}
+
+    /* ═══ EDIT PANEL ═══ */
+    .ep{display:none;margin-bottom:20px;animation:sin .25s}.ep.sh{display:block}
+    .epc{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:12px}
+    .epct{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:var(--t2)}
+    .dr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .dr label{font-size:12px;color:var(--t3);white-space:nowrap}
+    .di{background:var(--sf2);border:1px solid var(--bd);color:var(--t1);border-radius:8px;padding:7px 12px;font-size:13px;font-family:inherit;outline:none;transition:border .2s;width:160px}
+    .di:focus{border-color:var(--cyan)}
+    .dcs2{background:var(--sf2);border:1px solid var(--bd);color:var(--t1);border-radius:8px;padding:7px 12px;font-size:13px;font-family:inherit;outline:none}
+    .eps{background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:10px}
+    .epsh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .epe{width:36px;background:var(--sf);border:1px solid var(--bd);color:var(--t1);border-radius:6px;padding:5px;font-size:16px;text-align:center;outline:none}
+    .epn{flex:1;background:var(--sf);border:1px solid var(--bd);color:var(--t1);border-radius:6px;padding:6px 10px;font-size:13px;font-family:inherit;outline:none;min-width:0}
+    .epe:focus,.epn:focus,.etn:focus{border-color:var(--cyan)}
+    .epsd{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;transition:all .15s}
+    .epsd:hover{color:var(--red);background:rgba(239,68,68,.1)}
+    .cp{display:flex;gap:4px;flex-wrap:wrap;margin-left:4px}
+    .co{width:20px;height:20px;border-radius:4px;border:2px solid transparent;cursor:pointer;transition:all .15s;flex-shrink:0}
+    .co:hover{transform:scale(1.2)}.co.sel{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,.2)}
+    .et{display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:3px 0}
+    .etn{flex:1;background:var(--sf);border:1px solid var(--bd);color:var(--t1);border-radius:6px;padding:5px 9px;font-size:12px;font-family:inherit;outline:none;min-width:0}
+    .etd{display:flex;gap:3px;flex-shrink:0}
+    .edt{width:26px;height:26px;border-radius:5px;border:1px solid var(--bd);background:var(--sf);color:var(--t3);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:monospace}
+    .edt.on{background:var(--cyan);color:#000;border-color:var(--cyan);font-weight:700}
+    .etdl{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px}
+    .etdl:hover{color:var(--red)}
+    .bat{background:none;border:1px dashed var(--bd);color:var(--t3);border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;width:100%;margin-top:4px;font-family:inherit;transition:all .15s}
+    .bat:hover{border-color:var(--cyan);color:var(--cyan)}
+    .bas{background:none;border:1px dashed var(--bd);color:var(--t3);border-radius:10px;padding:12px;font-size:12px;cursor:pointer;width:100%;font-family:inherit;transition:all .15s;text-align:center}
+    .bas:hover{border-color:var(--cyan);color:var(--cyan)}
+    .bap{background:linear-gradient(135deg,var(--cyan),#06b6d4);border:none;color:#000;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:block;margin:16px auto 0;min-width:200px}
+    .bap:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(34,211,238,.25)}
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <div><h1 class="ttl">📋 周计划</h1><div class="sub" id="subTxt"></div></div>
+    <div class="hbtns">
+      <button class="bsm" id="btnE" onclick="togEdit()">✏️ 编辑计划</button>
+      <button class="bsm" onclick="showRM()">↺ 重置打卡</button>
+    </div>
+  </div>
+  <div class="ep" id="epanel"></div>
+  <div id="mainArea">
+    <div class="pbox"><div class="phdr"><span class="plbl" id="pL">总进度</span><span class="pcnt" id="pC"></span></div><div class="ptrk"><div class="pfil" id="pF"></div></div></div>
+    <div class="lgd" id="lgd"></div>
+    <div class="tw"><table id="tbl"></table></div>
+    <div class="dg" id="dg"></div>
+    <div class="cel" id="cel"><div style="font-size:32px">🎉</div><div style="font-size:16px;font-weight:600;margin-top:8px">全部完成！本周大吉！</div><div style="font-size:12px;color:var(--t3);margin-top:4px">所有任务已打卡完毕</div></div>
+  </div>
+  <div class="mo" id="rM" onclick="hideRM()"><div class="md" onclick="event.stopPropagation()"><div style="font-size:28px;text-align:center;margin-bottom:12px">⚠️</div><div class="mdt">确认重置？</div><div class="mdd">所有打卡记录将被清空（不影响计划配置）</div><div class="mdb"><button class="bcn" onclick="hideRM()">取消</button><button class="bdg" onclick="doReset()">重置</button></div></div></div>
+
+<script>
+const DEF={startDate:"2025-02-22",dayCount:8,sections:[
+  {emoji:"💪",name:"每日锻炼",color:"#22d3ee",tasks:[
+    {name:"哑铃平举",days:[1,1,1,1,1,1,1,1]},{name:"划船 30 min",days:[1,1,1,1,1,1,1,1]},{name:"步行 5 公里",days:[1,1,1,1,1,1,1,1]}]},
+  {emoji:"🔬",name:"消融实验",color:"#f472b6",tasks:[
+    {name:"学习+做实验 (UNI)",days:[1,0,0,0,0,0,0,0]},{name:"消融实验 — 临床",days:[0,1,0,0,0,0,0,0]},{name:"消融实验完成",days:[0,0,1,0,0,0,0,0]}]},
+  {emoji:"📂",name:"材料 & 杂务",color:"#a78bfa",tasks:[
+    {name:"硬盘交白老师",days:[0,1,0,0,0,0,0,0]},{name:"校准曲线/Tripo AI/补材料",days:[0,0,0,1,0,0,0,0]},{name:"改图",days:[0,0,0,0,1,0,0,0]}]},
+  {emoji:"✍️",name:"文章修改 & 投稿",color:"#34d399",tasks:[
+    {name:"逐一改问题/文章/数据",days:[0,0,0,0,0,1,1,0]},{name:"整理数据 & 投稿 🚀",days:[0,0,0,0,0,0,0,1]}]}
+]};
+const PAL=["#22d3ee","#f472b6","#a78bfa","#34d399","#fbbf24","#fb923c","#60a5fa","#e879f9","#f87171","#a3e635"];
+const WD=["日","一","二","三","四","五","六"];
+const SK_C="gantt-cfg-v3",SK_D="gantt-done-v3";
+let cfg,done,days,editing=false;
+
+function dAdd(b,n){const d=new Date(b);d.setDate(d.getDate()+n);return d}
+function fS(d){return(d.getMonth()+1)+"/"+d.getDate()}
+function fL(d){return d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")}
+function dW(d){return WD[d.getDay()]}
+function mg(c){return`linear-gradient(135deg,${c},${c}dd)`}
+function tid(s,t){return"s"+s+"t"+t}
+
+function bDays(){
+  const b=new Date(cfg.startDate+"T00:00:00"),td=new Date();td.setHours(0,0,0,0);
+  days=[];for(let i=0;i<cfg.dayCount;i++){const d=dAdd(b,i);days.push({key:fS(d),label:fS(d),wd:dW(d),isT:d.getTime()===td.getTime(),d:d})}
+}
+function allCells(){
+  const c={};cfg.sections.forEach((s,si)=>s.tasks.forEach((t,ti)=>{const id=tid(si,ti);days.forEach((d,di)=>{if(t.days[di])c[id+"-"+d.key]=false})}));return c
+}
+
+function ldC(){try{const s=localStorage.getItem(SK_C);if(s)return JSON.parse(s)}catch(e){}return JSON.parse(JSON.stringify(DEF))}
+function svC(){try{localStorage.setItem(SK_C,JSON.stringify(cfg))}catch(e){}}
+function ldD(){try{const s=localStorage.getItem(SK_D);if(s){const p=JSON.parse(s),d=allCells();return Object.assign(d,p)}}catch(e){}return allCells()}
+function svD(){try{localStorage.setItem(SK_D,JSON.stringify(done))}catch(e){}}
+
+function boom(cx,cy){
+  const cs=PAL.slice(0,6);for(let i=0;i<8;i++){const e=document.createElement("div");e.className="cft";
+  e.style.left=(cx+(Math.random()-.5)*60)+"px";e.style.top=(cy+(Math.random()-.5)*40)+"px";
+  e.style.background=cs[Math.floor(Math.random()*cs.length)];e.style.borderRadius=Math.random()>.5?"50%":"2px";
+  e.style.animationDelay=(Math.random()*.15)+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),1200)}
+}
+function togC(k,e){const w=done[k];done[k]=!w;svD();if(!w){const r=e.currentTarget.getBoundingClientRect();boom(r.left+r.width/2,r.top+r.height/2)}updG()}
+function showRM(){document.getElementById("rM").classList.add("sh")}
+function hideRM(){document.getElementById("rM").classList.remove("sh")}
+function doReset(){done=allCells();try{localStorage.removeItem(SK_D)}catch(e){}hideRM();updG()}
+
+// ═══ RENDER GANTT ═══
+function renG(){
+  bDays();done=ldD();
+  const d0=days[0].d,dN=days[days.length-1].d;
+  document.getElementById("subTxt").textContent=fL(d0)+" "+dW(d0)+" → "+fL(dN)+" "+dW(dN)+" · 点击色条完成任务";
+
+  document.getElementById("lgd").innerHTML=cfg.sections.map(s=>`<div class="lgi"><div class="lgd-dot" style="background:${mg(s.color)}"></div><span>${s.emoji} ${s.name}</span></div>`).join("");
+
+  let h=`<thead><tr><th class="thd">任务</th>`;
+  days.forEach(d=>{h+=`<th class="${d.isT?'tod':''}"><div>${d.label}</div><div class="ths">${d.isT?d.wd+' ← 今天':d.wd}</div></th>`});
+  h+=`</tr></thead><tbody>`;
+  cfg.sections.forEach((sec,si)=>{
+    h+=`<tr class="sr"><td colspan="${days.length+1}">${sec.emoji} ${sec.name}</td></tr>`;
+    sec.tasks.forEach((tk,ti)=>{
+      const id=tid(si,ti);
+      h+=`<tr class="tr"><td class="tnc"><div class="tni"><div class="tnid" id="i-${id}" style="background:${sec.color}"></div><span class="tnt" id="l-${id}">${tk.name}</span><span class="tnk" id="k-${id}">✓</span></div></td>`;
+      days.forEach((d,di)=>{
+        const ck=id+"-"+d.key;h+=`<td class="bc">`;
+        if(tk.days[di])h+=`<div class="bar" id="b-${ck}" style="background:${mg(sec.color)}" onclick="togC('${ck}',event)"><span class="bchk">✓</span><span class="blbl">${tk.name}</span></div>`;
+        h+=`</td>`});h+=`</tr>`})});
+  h+=`</tbody>`;
+  document.getElementById("tbl").innerHTML=h;
+
+  document.getElementById("dg").innerHTML=days.map(d=>`<div class="dc" id="dc-${d.key}"><div class="dcl ${d.isT?'tod':''}">${d.label}</div><div class="dcp" id="dp-${d.key}">0%</div><div class="dcs" id="ds-${d.key}">0/0</div></div>`).join("");
+  updG();
+}
+
+function updG(){
+  const ks=Object.keys(done),tot=ks.length,dn=ks.filter(k=>done[k]).length,pct=tot?Math.round(dn/tot*100):0;
+  document.getElementById("pL").textContent="总进度 "+(pct===100?"🎉":"");
+  document.getElementById("pC").textContent=dn+"/"+tot+" · "+pct+"%";
+  const f=document.getElementById("pF");f.style.width=pct+"%";
+  f.style.background=pct===100?"linear-gradient(90deg,#34d399,#fbbf24)":"linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6)";
+
+  cfg.sections.forEach((sec,si)=>{sec.tasks.forEach((tk,ti)=>{
+    const id=tid(si,ti),td=days.every((d,di)=>!tk.days[di]||done[id+"-"+d.key]);
+    const l=document.getElementById("l-"+id),ind=document.getElementById("i-"+id),ch=document.getElementById("k-"+id);
+    if(l)l.className="tnt"+(td?" dn":"");if(ind)ind.style.background=td?"#2f3548":sec.color;if(ch)ch.className="tnk"+(td?" sh":"");
+    days.forEach((d,di)=>{if(!tk.days[di])return;const ck=id+"-"+d.key,b=document.getElementById("b-"+ck);
+      if(!b)return;if(done[ck]){b.classList.add("dn");b.style.background="#1e2235"}else{b.classList.remove("dn");b.style.background=mg(sec.color)}})})});
+
+  days.forEach(d=>{const dc=ks.filter(k=>k.endsWith("-"+d.key)),dd=dc.filter(k=>done[k]).length,dt=dc.length,dp=dt?Math.round(dd/dt*100):0;
+    const c=document.getElementById("dc-"+d.key),p=document.getElementById("dp-"+d.key),s=document.getElementById("ds-"+d.key);
+    if(c)c.className="dc"+(dp===100?" ad":"");if(p){p.textContent=dp+"%";p.className="dcp"+(dp===100?" ad":"")}if(s)s.textContent=dd+"/"+dt});
+  document.getElementById("cel").className="cel"+(pct===100?" sh":"");
+}
+
+// ═══ EDIT PANEL ═══
+function togEdit(){
+  editing=!editing;
+  const b=document.getElementById("btnE"),p=document.getElementById("epanel");
+  b.classList.toggle("act",editing);b.innerHTML=editing?"✅ 保存计划":"✏️ 编辑计划";
+  if(editing){renEP();p.classList.add("sh")}
+  else{applyEP();p.classList.remove("sh")}
+}
+
+function renEP(){
+  const p=document.getElementById("epanel");
+  // Build day labels for toggles
+  const base=new Date(cfg.startDate+"T00:00:00");
+  const dl=[];for(let i=0;i<cfg.dayCount;i++)dl.push(fS(dAdd(base,i)));
+
+  let h=`<div class="epc"><div class="epct">📅 日期设置</div><div class="dr">`;
+  h+=`<label>起始日期</label><input type="date" class="di" id="eSD" value="${cfg.startDate}" onchange="onDateChange()" />`;
+  h+=`<label>天数</label><select class="dcs2" id="eDC" onchange="onDayCountChange()">`;
+  for(let n=5;n<=14;n++)h+=`<option value="${n}" ${n===cfg.dayCount?"selected":""}>${n} 天</option>`;
+  h+=`</select></div></div>`;
+
+  cfg.sections.forEach((sec,si)=>{
+    h+=`<div class="eps"><div class="epsh">`;
+    h+=`<input class="epe" id="ee-${si}" value="${sec.emoji}" maxlength="4" />`;
+    h+=`<input class="epn" id="en-${si}" value="${sec.name}" placeholder="板块名称" />`;
+    h+=`<div class="cp">${PAL.map(c=>`<div class="co ${c===sec.color?'sel':''}" style="background:${c}" onclick="pCol(${si},'${c}',this)"></div>`).join("")}</div>`;
+    h+=`<button class="epsd" onclick="dSec(${si})" title="删除板块">✕</button></div>`;
+
+    sec.tasks.forEach((tk,ti)=>{
+      h+=`<div class="et"><input class="etn" id="etn-${si}-${ti}" value="${tk.name}" placeholder="任务名称" /><div class="etd">`;
+      for(let di=0;di<cfg.dayCount;di++){
+        const on=tk.days[di]?1:0;
+        h+=`<div class="edt ${on?'on':''}" onclick="tDay(${si},${ti},${di},this)" title="${dl[di]||''}">${dl[di]||di}</div>`;
+      }
+      h+=`</div><button class="etdl" onclick="dTsk(${si},${ti})" title="删除">✕</button></div>`;
+    });
+    h+=`<button class="bat" onclick="aTsk(${si})">+ 添加任务</button></div>`;
+  });
+  h+=`<button class="bas" onclick="aSec()">+ 添加新板块</button>`;
+  h+=`<button class="bap" onclick="togEdit()">✅ 保存并返回甘特图</button>`;
+  p.innerHTML=h;
+}
+
+function onDateChange(){readEPInputs();renEP()}
+function onDayCountChange(){
+  readEPInputs();
+  const nc=parseInt(document.getElementById("eDC").value);
+  cfg.sections.forEach(s=>s.tasks.forEach(t=>{
+    while(t.days.length<nc)t.days.push(0);
+    if(t.days.length>nc)t.days=t.days.slice(0,nc);
+  }));
+  cfg.dayCount=nc;renEP();
+}
+
+function pCol(si,c,el){cfg.sections[si].color=c;el.parentElement.querySelectorAll(".co").forEach(e=>e.classList.remove("sel"));el.classList.add("sel")}
+function tDay(si,ti,di,el){cfg.sections[si].tasks[ti].days[di]=cfg.sections[si].tasks[ti].days[di]?0:1;el.classList.toggle("on")}
+function aTsk(si){readEPInputs();cfg.sections[si].tasks.push({name:"新任务",days:new Array(cfg.dayCount).fill(0)});renEP()}
+function dTsk(si,ti){readEPInputs();if(cfg.sections[si].tasks.length<=1){if(confirm("板块至少保留一个任务，要删除整个板块吗？"))dSec(si);return}cfg.sections[si].tasks.splice(ti,1);renEP()}
+function aSec(){readEPInputs();const uc=cfg.sections.map(s=>s.color);const nc=PAL.find(c=>!uc.includes(c))||PAL[Math.floor(Math.random()*PAL.length)];cfg.sections.push({emoji:"📌",name:"新板块",color:nc,tasks:[{name:"新任务",days:new Array(cfg.dayCount).fill(0)}]});renEP()}
+function dSec(si){readEPInputs();if(cfg.sections.length<=1){alert("至少保留一个板块");return}cfg.sections.splice(si,1);renEP()}
+
+function readEPInputs(){
+  const sd=document.getElementById("eSD"),dc=document.getElementById("eDC");
+  if(sd)cfg.startDate=sd.value;if(dc)cfg.dayCount=parseInt(dc.value);
+  cfg.sections.forEach((sec,si)=>{
+    const ee=document.getElementById("ee-"+si),en=document.getElementById("en-"+si);
+    if(ee)sec.emoji=ee.value||"📌";if(en)sec.name=en.value||"未命名";
+    sec.tasks.forEach((tk,ti)=>{const tn=document.getElementById("etn-"+si+"-"+ti);if(tn)tk.name=tn.value||"未命名任务"})
+  });
+}
+
+function applyEP(){
+  readEPInputs();
+  // Normalize days arrays
+  cfg.sections.forEach(s=>s.tasks.forEach(t=>{
+    while(t.days.length<cfg.dayCount)t.days.push(0);
+    if(t.days.length>cfg.dayCount)t.days=t.days.slice(0,cfg.dayCount);
+  }));
+  svC();done=allCells();svD();renG();
+}
+
+// ═══ INIT ═══
+cfg=ldC();renG();
+</script>
+</body>
+</html>
